@@ -1,0 +1,8 @@
+# Ecosistema npm (directory: /)
+
+/package.json @jagobainda
+/package-lock.json @jagobainda
+
+# Ecosistema github-actions (directory: /)
+
+/.github/workflows/ @jagobainda

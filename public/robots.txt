@@ -1,0 +1,3 @@
+# Private dashboard: keep every crawler out.
+User-agent: *
+Disallow: /

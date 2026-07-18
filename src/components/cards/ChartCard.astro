@@ -1,0 +1,53 @@
+---
+
+interface Props {
+    title: string;
+    subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+---
+
+<article
+    class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)] transition-colors duration-300"
+>
+    <header class="mb-4">
+        <h3 class="font-mono text-lg font-bold">{title}</h3>
+        {subtitle && <p class="mt-0.5 text-sm text-(--text-muted)">{subtitle}</p>}
+    </header>
+
+    <slot />
+
+    {
+        Astro.slots.has("table") && (
+            <details class="mt-4 text-sm">
+                <summary class="cursor-pointer font-mono text-xs text-(--text-muted) transition-colors duration-300 hover:text-(--text-color)">
+                    Ver como tabla
+                </summary>
+                <div class="mt-2 overflow-x-auto">
+                    <slot name="table" />
+                </div>
+            </details>
+        )
+    }
+</article>
+
+<style is:global>
+
+
+    .dashboard-card table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .dashboard-card th {
+        text-align: left;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem 0.25rem 0;
+        border-bottom: 1px solid var(--chart-axis);
+    }
+    .dashboard-card td {
+        padding: 0.25rem 0.75rem 0.25rem 0;
+        border-bottom: 1px solid var(--chart-grid);
+        font-variant-numeric: tabular-nums;
+    }
+</style>

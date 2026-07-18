@@ -1,0 +1,23 @@
+---
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getEntry } from "astro:content";
+
+const page = await getEntry("pages", "404");
+if (!page) throw new Error("Missing pages/404 entry — create src/content/pages/404.json");
+---
+
+<BaseLayout title={page.data.title}>
+    <main class="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">
+        <h1 class="m-0 font-mono text-6xl font-bold [text-shadow:3px_3px_5px_var(--shadow-light)]">
+            {page.data.heading}<span class="animate-blink" aria-hidden="true">_</span>
+        </h1>
+        <p class="m-0 text-(--text-muted)">La página que buscas no existe.</p>
+        <a
+            href="/"
+            class="mt-2 flex h-11 items-center justify-center rounded-md bg-(--bg-secondary) px-5 font-mono text-sm text-(--text-color) no-underline shadow-[4px_4px_6px_var(--shadow-light)] transition-all duration-300 ease-in-out hover:shadow-[6px_6px_8px_var(--shadow-dark)]"
+        >
+            cd ~/dashboard
+        </a>
+    </main>
+</BaseLayout>

@@ -1,0 +1,65 @@
+---
+
+import { flagCode, formatNumber } from "../../lib/stats";
+import { seriesColor } from "../../lib/viz";
+
+interface Item {
+    label: string;
+    value: number;
+
+    sublabel?: string;
+
+    flag?: string;
+}
+
+interface Props {
+    items: Item[];
+
+    slot?: number;
+
+    mono?: boolean;
+}
+
+const { items, slot = 1, mono = false } = Astro.props;
+
+const max = Math.max(...items.map(i => i.value), 1);
+const color = seriesColor(slot);
+---
+
+<ul class="m-0 flex list-none flex-col gap-2.5 p-0">
+    {
+        items.map(item => (
+            <li>
+                <div class="mb-1 flex items-center justify-between gap-3 text-sm">
+                    <span
+                        class:list={["flex min-w-0 items-center gap-2 truncate", mono && "font-mono text-xs"]}
+                        title={item.label}
+                    >
+                        {item.flag && flagCode(item.flag) && (
+                            <img
+                                src={`https://flagcdn.com/16x12/${flagCode(item.flag)}.png`}
+                                srcset={`https://flagcdn.com/32x24/${flagCode(item.flag)}.png 2x, https://flagcdn.com/48x36/${flagCode(item.flag)}.png 3x`}
+                                width="16"
+                                height="12"
+                                alt=""
+                                loading="lazy"
+                                class="shrink-0 rounded-xs"
+                            />
+                        )}
+                        <span class="truncate">
+                            {item.label}
+                            {item.sublabel && <span class="ml-1 text-xs text-(--text-muted)">{item.sublabel}</span>}
+                        </span>
+                    </span>
+                    <span class="font-bold tabular-nums">{formatNumber(item.value)}</span>
+                </div>
+                <div class="h-2 w-full rounded-r-xs bg-(--chart-track)">
+                    <div
+                        class="h-full rounded-r-xs"
+                        style={`width:${((item.value / max) * 100).toFixed(1)}%;background:${color}`}
+                    />
+                </div>
+            </li>
+        ))
+    }
+</ul>

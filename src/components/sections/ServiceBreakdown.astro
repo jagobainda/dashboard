@@ -1,0 +1,144 @@
+---
+
+import BarList from "../charts/BarList.astro";
+import { countryName, formatDateTime, formatNumber, formatShare, type ServiceStats } from "../../lib/stats";
+import { serviceLabel, seriesColor } from "../../lib/viz";
+
+interface Props {
+    byService: Record<string, ServiceStats>;
+    slots: Map<string, number>;
+
+    order: string[];
+}
+
+const { byService, slots, order } = Astro.props;
+
+const services = order
+    .filter(id => byService[id])
+    .map(id => ({
+        id,
+        label: serviceLabel(id),
+        color: seriesColor(slots.get(id) ?? 8),
+        stats: byService[id]!,
+    }));
+---
+
+<section aria-label="Desglose por servicio">
+    <h2 class="mb-4 font-mono text-2xl font-bold">Por servicio</h2>
+
+    <div
+        role="tablist"
+        aria-label="Servicios"
+        class="mb-5 flex flex-wrap gap-1 border-b border-(--chart-axis) max-sm:gap-0"
+    >
+        {
+            services.map((service, i) => (
+                <button
+                    type="button"
+                    role="tab"
+                    id={`tab-${service.id}`}
+                    aria-selected={i === 0 ? "true" : "false"}
+                    aria-controls={`panel-${service.id}`}
+                    tabindex={i === 0 ? 0 : -1}
+                    class="service-tab flex cursor-pointer items-center gap-2 rounded-t-md border-b-2 border-none border-b-transparent bg-transparent px-5 py-3 font-mono text-base text-(--text-color) transition-all duration-300 ease-in-out hover:bg-(--bg-secondary)/30 max-md:px-3 max-md:py-2 max-md:text-sm"
+                >
+                    <span
+                        class="inline-block h-2.5 w-2.5 rounded-full"
+                        style={`background:${service.color}`}
+                        aria-hidden="true"
+                    />
+                    {service.label}
+                </button>
+            ))
+        }
+    </div>
+
+    {
+        services.map((service, i) => (
+            <div id={`panel-${service.id}`} role="tabpanel" aria-labelledby={`tab-${service.id}`} hidden={i !== 0}>
+                <dl class="m-0 mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+                    {[
+                        ["Visitas", formatNumber(service.stats.visits)],
+                        ["Cuota", formatShare(service.stats.share)],
+                        ["Rutas únicas", formatNumber(service.stats.unique_paths)],
+                        ["Primera visita", formatDateTime(service.stats.first_visit_at)],
+                        ["Última visita", formatDateTime(service.stats.last_visit_at)],
+                    ].map(([label, value]) => (
+                        <div class="rounded-md bg-(--bg-secondary) px-4 py-3 shadow-[4px_4px_6px_var(--shadow-light)]">
+                            <dt class="text-xs text-(--text-muted)">{label}</dt>
+                            <dd class="m-0 mt-0.5 font-bold">{value}</dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)]">
+                        <h3 class="mt-0 mb-4 font-mono text-lg font-bold">Rutas más visitadas</h3>
+                        <BarList mono items={service.stats.top_paths.map(p => ({ label: p.path, value: p.count }))} />
+                    </div>
+                    <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)]">
+                        <h3 class="mt-0 mb-4 font-mono text-lg font-bold">Países</h3>
+                        <BarList
+                            items={service.stats.top_countries.map(c => ({
+                                label: countryName(c.country),
+                                sublabel: c.country,
+                                value: c.count,
+                                flag: c.country,
+                            }))}
+                        />
+                    </div>
+                    <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)]">
+                        <h3 class="mt-0 mb-4 font-mono text-lg font-bold">Navegadores</h3>
+                        <BarList items={service.stats.top_browsers.map(b => ({ label: b.browser, value: b.count }))} />
+                    </div>
+                    <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)]">
+                        <h3 class="mt-0 mb-4 font-mono text-lg font-bold">Sistemas operativos</h3>
+                        <BarList items={service.stats.top_os.map(o => ({ label: o.os, value: o.count }))} />
+                    </div>
+                    <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)] lg:col-span-2">
+                        <h3 class="mt-0 mb-4 font-mono text-lg font-bold">Prefijos</h3>
+                        <BarList
+                            mono
+                            items={service.stats.top_prefixes.map(p => ({ label: p.prefix, value: p.count }))}
+                        />
+                    </div>
+                </div>
+            </div>
+        ))
+    }
+</section>
+
+<style>
+    .service-tab[aria-selected="true"] {
+        border-bottom-color: var(--text-color);
+        font-weight: 700;
+    }
+</style>
+
+<script>
+    const tablist = document.querySelector('[aria-label="Servicios"]');
+    if (tablist) {
+        const tabs = [...tablist.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+
+        const select = (tab: HTMLButtonElement): void => {
+            for (const t of tabs) {
+                const selected = t === tab;
+                t.setAttribute("aria-selected", String(selected));
+                t.tabIndex = selected ? 0 : -1;
+                const panel = document.getElementById(t.getAttribute("aria-controls") ?? "");
+                if (panel) panel.hidden = !selected;
+            }
+            tab.focus();
+        };
+
+        tabs.forEach((tab, i) => {
+            tab.addEventListener("click", () => select(tab));
+            tab.addEventListener("keydown", event => {
+                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                event.preventDefault();
+                const delta = event.key === "ArrowRight" ? 1 : -1;
+                select(tabs[(i + delta + tabs.length) % tabs.length]!);
+            });
+        });
+    }
+</script>

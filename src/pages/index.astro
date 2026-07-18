@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DashboardPage from "../components/pages/DashboardPage.astro";
+import { getEntry } from "astro:content";
+
+const page = await getEntry("pages", "index");
+if (!page) throw new Error("Missing pages/index entry — create src/content/pages/index.json");
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+---
+
+<BaseLayout title={page.data.title}>
+    <DashboardPage heading={page.data.heading ?? page.data.title} />
+</BaseLayout>

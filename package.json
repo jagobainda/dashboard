@@ -1,0 +1,26 @@
+{
+    "name": "dashboard",
+    "type": "module",
+    "version": "0.0.1",
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview",
+        "astro": "astro",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "@astrojs/node": "^11.0.2",
+        "@tailwindcss/vite": "^4.3.3",
+        "animejs": "^4.5.0",
+        "astro": "^7.1.1",
+        "astro-icon": "^1.1.5",
+        "tailwindcss": "^4.3.3"
+    },
+    "devDependencies": {
+        "prettier": "^3.9.5",
+        "prettier-plugin-astro": "^0.14.1",
+        "prettier-plugin-tailwindcss": "^0.8.1"
+    }
+}

@@ -1,0 +1,84 @@
+---
+
+import { formatDate, formatDateTime } from "../../lib/stats";
+
+interface Props {
+    heading: string;
+    windowSince?: string;
+    windowUntil?: string;
+    daysCovered?: number;
+    generatedAt?: string;
+}
+
+const { heading, windowSince, windowUntil, daysCovered, generatedAt } = Astro.props;
+---
+
+<header class="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <div>
+        <h1 class="m-0 font-mono text-3xl font-bold [text-shadow:3px_3px_5px_var(--shadow-light)] max-sm:text-2xl">
+            {heading}<span class="animate-blink" aria-hidden="true">_</span>
+        </h1>
+        {
+            windowSince && windowUntil && (
+                <p class="m-0 mt-2 text-sm text-(--text-muted)">
+                    Ventana: {formatDate(windowSince)} → {formatDate(windowUntil)} ({daysCovered}{" "}
+                    {daysCovered === 1 ? "día" : "días"})
+                    {generatedAt && <span> · generado el {formatDateTime(generatedAt)}</span>}
+                </p>
+            )
+        }
+    </div>
+
+    <div class="flex items-center gap-3">
+        <a
+            href="https://jagoba.dev"
+            class="flex h-11 items-center justify-center rounded-md bg-(--bg-secondary) px-4 font-mono text-sm text-(--text-color) no-underline shadow-[4px_4px_6px_var(--shadow-light)] transition-all duration-300 ease-in-out hover:shadow-[6px_6px_8px_var(--shadow-dark)]"
+        >
+            ← jagoba.dev
+        </a>
+        <button
+            id="theme-toggle"
+            aria-label="Cambiar tema"
+            class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md border-none bg-(--bg-secondary) text-(--text-color) shadow-[4px_4px_6px_var(--shadow-light)] transition-all duration-300 ease-in-out hover:shadow-[6px_6px_8px_var(--shadow-dark)]"
+        >
+            <svg
+                class="icon-sun h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+            >
+                <circle cx="12" cy="12" r="4.5"></circle>
+                <path
+                    d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+                ></path>
+            </svg>
+            <svg class="icon-moon h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z"></path>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<style>
+
+
+    .icon-moon {
+        display: none;
+    }
+    :global(body.dark) .icon-moon {
+        display: block;
+    }
+    :global(body.dark) .icon-sun {
+        display: none;
+    }
+</style>
+
+<script>
+    import { initThemeToggle } from "../../scripts/theme";
+
+    const button = document.getElementById("theme-toggle");
+    if (button) initThemeToggle(button);
+</script>

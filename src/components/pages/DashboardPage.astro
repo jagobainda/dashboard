@@ -1,0 +1,353 @@
+---
+
+import ChartCard from "../cards/ChartCard.astro";
+import StatTile from "../cards/StatTile.astro";
+import BarList from "../charts/BarList.astro";
+import ColumnChart from "../charts/ColumnChart.astro";
+import DonutChart from "../charts/DonutChart.astro";
+import Meter from "../charts/Meter.astro";
+import StackedColumnChart from "../charts/StackedColumnChart.astro";
+import DashboardHeader from "../sections/DashboardHeader.astro";
+import ServiceBreakdown from "../sections/ServiceBreakdown.astro";
+import {
+    countryName,
+    dayLabel,
+    dowName,
+    fetchVisitsStats,
+    formatDateTime,
+    formatNumber,
+    formatShare,
+    STATS_URL,
+    type VisitsStats,
+} from "../../lib/stats";
+import { serviceLabel, serviceSlots, seriesColor } from "../../lib/viz";
+
+interface Props {
+    heading: string;
+}
+
+const { heading } = Astro.props;
+
+let stats: VisitsStats | null = null;
+let loadError = false;
+try {
+    stats = await fetchVisitsStats();
+} catch {
+    loadError = true;
+}
+
+const slots = stats ? serviceSlots(Object.keys(stats.by_service)) : new Map<string, number>();
+const colorOf = (service: string): string => seriesColor(slots.get(service) ?? 8);
+
+const serviceOrder = stats ? stats.top_services.map(s => s.service) : [];
+
+const donutSegments = stats
+    ? stats.top_services.map(s => ({ label: serviceLabel(s.service), value: s.count, color: colorOf(s.service) }))
+    : [];
+
+const stackSeries = [...serviceOrder]
+    .sort((a, b) => (slots.get(a) ?? 9) - (slots.get(b) ?? 9))
+    .map(service => ({ id: service, label: serviceLabel(service), color: colorOf(service) }));
+
+const toStackColumns = (rows: { label: string; by_service: Record<string, number> }[]) =>
+    rows.map(row => ({
+        label: row.label,
+        segments: stackSeries.map(s => ({ label: s.label, value: row.by_service[s.id] ?? 0, color: s.color })),
+    }));
+
+const dayColumns = stats
+    ? toStackColumns(stats.by_day.map(d => ({ label: dayLabel(d.day), by_service: d.by_service })))
+    : [];
+const monthColumns = stats
+    ? toStackColumns(stats.by_month.map(m => ({ label: m.label, by_service: m.by_service })))
+    : [];
+const yearColumns = stats
+    ? toStackColumns(stats.by_year.map(y => ({ label: String(y.year), by_service: y.by_service })))
+    : [];
+
+const hourPoints = stats
+    ? stats.by_hour_of_day.map(h => ({
+          label: String(h.hour),
+          longLabel: `${String(h.hour).padStart(2, "0")}:00 – ${String((h.hour + 1) % 24).padStart(2, "0")}:00`,
+          value: h.visits,
+      }))
+    : [];
+
+const dowPoints = stats ? stats.by_day_of_week.map(d => ({ label: dowName(d.dow), value: d.visits })) : [];
+---
+
+<main class="mx-auto max-w-6xl px-5 py-8 max-sm:px-4">
+    <DashboardHeader
+        heading={heading}
+        windowSince={stats?.window.since}
+        windowUntil={stats?.window.until}
+        daysCovered={stats?.window.days_covered}
+        generatedAt={stats?.generated_at}
+    />
+
+    {
+        loadError && (
+            <div class="dashboard-card rounded-xl bg-(--bg-secondary) p-8 text-center shadow-[4px_4px_8px_var(--shadow-light)]">
+                <p class="m-0 font-mono text-lg font-bold">error: no se pudieron cargar las estadísticas</p>
+                <p class="m-0 mt-2 text-sm text-(--text-muted)">
+                    El endpoint <span class="font-mono">{STATS_URL}</span> no respondió. Recarga la página para
+                    reintentarlo.
+                </p>
+            </div>
+        )
+    }
+
+    {
+        stats && (
+            <>
+
+                <section aria-label="Totales" class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+                    <StatTile
+                        label="Visitas"
+                        value={stats.totals.visits}
+                        hint={`en ${stats.window.days_covered} días`}
+                    />
+                    <StatTile label="Rutas únicas" value={stats.totals.unique_paths} />
+                    <StatTile label="Países" value={stats.totals.countries} />
+                    <StatTile label="Servicios" value={stats.totals.services} />
+                </section>
+
+
+                <section aria-label="Reparto" class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <ChartCard title="Visitas por servicio" subtitle="Reparto del total de visitas">
+                        <DonutChart segments={donutSegments} centerLabel="visitas" />
+                        <table slot="table">
+                            <thead>
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Visitas</th>
+                                    <th>Cuota</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.top_services.map(s => (
+                                    <tr>
+                                        <td class="font-mono">{serviceLabel(s.service)}</td>
+                                        <td>{formatNumber(s.count)}</td>
+                                        <td>{formatShare(s.count / stats!.totals.visits)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </ChartCard>
+
+                    <ChartCard title="Bots vs. humanos" subtitle="Tráfico automatizado detectado">
+                        <Meter
+                            share={stats.bot_vs_human.bot_share}
+                            value={stats.bot_vs_human.bot}
+                            total={stats.totals.visits}
+                            label="Visitas de bots"
+                        />
+                        <dl class="m-0 mt-6 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <dt class="text-xs text-(--text-muted)">Humanos</dt>
+                                <dd class="m-0 font-bold">{formatNumber(stats.bot_vs_human.human)}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-(--text-muted)">Bots</dt>
+                                <dd class="m-0 font-bold">{formatNumber(stats.bot_vs_human.bot)}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-(--text-muted)">Primera visita</dt>
+                                <dd class="m-0 font-bold">{formatDateTime(stats.totals.first_visit_at)}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-(--text-muted)">Última visita</dt>
+                                <dd class="m-0 font-bold">{formatDateTime(stats.totals.last_visit_at)}</dd>
+                            </div>
+                        </dl>
+                    </ChartCard>
+                </section>
+
+
+                <section aria-label="Evolución temporal" class="mt-5 flex flex-col gap-5">
+                    <ChartCard title="Visitas por día" subtitle="Apilado por servicio">
+                        <StackedColumnChart
+                            columns={dayColumns}
+                            series={stackSeries}
+                            labelEvery={Math.max(1, Math.ceil(dayColumns.length / 14))}
+                        />
+                        <table slot="table">
+                            <thead>
+                                <tr>
+                                    <th>Día</th>
+                                    <th>Total</th>
+                                    {stackSeries.map(s => (
+                                        <th class="font-mono">{s.label}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.by_day.map(d => (
+                                    <tr>
+                                        <td>{dayLabel(d.day)}</td>
+                                        <td>{formatNumber(d.visits)}</td>
+                                        {stackSeries.map(s => (
+                                            <td>{formatNumber(d.by_service[s.id] ?? 0)}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </ChartCard>
+
+                    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                        <ChartCard title="Por hora del día" subtitle="Hora local (Europa/Madrid)">
+                            <ColumnChart points={hourPoints} labelEvery={2} />
+                            <table slot="table">
+                                <thead>
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Visitas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {hourPoints.map(p => (
+                                        <tr>
+                                            <td>{p.longLabel}</td>
+                                            <td>{formatNumber(p.value)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </ChartCard>
+
+                        <ChartCard title="Por día de la semana">
+                            <ColumnChart points={dowPoints} />
+                            <table slot="table">
+                                <thead>
+                                    <tr>
+                                        <th>Día</th>
+                                        <th>Visitas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dowPoints.map(p => (
+                                        <tr>
+                                            <td>{p.label}</td>
+                                            <td>{formatNumber(p.value)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </ChartCard>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                        <ChartCard title="Visitas por mes" subtitle="Apilado por servicio">
+                            <StackedColumnChart columns={monthColumns} series={stackSeries} />
+                            <table slot="table">
+                                <thead>
+                                    <tr>
+                                        <th>Mes</th>
+                                        <th>Total</th>
+                                        {stackSeries.map(s => (
+                                            <th class="font-mono">{s.label}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.by_month.map(m => (
+                                        <tr>
+                                            <td>{m.label}</td>
+                                            <td>{formatNumber(m.visits)}</td>
+                                            {stackSeries.map(s => (
+                                                <td>{formatNumber(m.by_service[s.id] ?? 0)}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </ChartCard>
+                        <ChartCard title="Visitas por año" subtitle="Apilado por servicio">
+                            <StackedColumnChart columns={yearColumns} series={stackSeries} />
+                            <table slot="table">
+                                <thead>
+                                    <tr>
+                                        <th>Año</th>
+                                        <th>Total</th>
+                                        {stackSeries.map(s => (
+                                            <th class="font-mono">{s.label}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.by_year.map(y => (
+                                        <tr>
+                                            <td>{y.year}</td>
+                                            <td>{formatNumber(y.visits)}</td>
+                                            {stackSeries.map(s => (
+                                                <td>{formatNumber(y.by_service[s.id] ?? 0)}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </ChartCard>
+                    </div>
+                </section>
+
+
+                <section aria-label="Rankings globales" class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <ChartCard title="Top países" subtitle="Todas las webs">
+                        <BarList
+                            items={stats.top_countries_global.map(c => ({
+                                label: countryName(c.country),
+                                sublabel: c.country,
+                                value: c.count,
+                                flag: c.country,
+                            }))}
+                        />
+                    </ChartCard>
+                    <ChartCard title="Top rutas" subtitle="Todas las webs">
+                        <BarList mono items={stats.top_paths_global.map(p => ({ label: p.path, value: p.count }))} />
+                    </ChartCard>
+                    <ChartCard title="Navegadores">
+                        <BarList items={stats.top_browsers_global.map(b => ({ label: b.browser, value: b.count }))} />
+                    </ChartCard>
+                    <ChartCard title="Sistemas operativos">
+                        <BarList items={stats.top_os_global.map(o => ({ label: o.os, value: o.count }))} />
+                    </ChartCard>
+                    <ChartCard title="Prefijos de ruta" subtitle="Todas las webs">
+                        <BarList
+                            mono
+                            items={stats.top_prefixes_global.map(p => ({ label: p.prefix, value: p.count }))}
+                        />
+                    </ChartCard>
+                    <ChartCard title="Servicios" subtitle="Visitas por servicio">
+                        <BarList
+                            mono
+                            items={stats.top_services.map(s => ({ label: serviceLabel(s.service), value: s.count }))}
+                        />
+                    </ChartCard>
+                </section>
+
+                <div class="mt-10">
+                    <ServiceBreakdown byService={stats.by_service} slots={slots} order={serviceOrder} />
+                </div>
+            </>
+        )
+    }
+
+    <footer class="mt-12 border-t border-(--chart-grid) pt-4 text-center text-xs text-(--text-muted)">
+        Fuente: <a href={STATS_URL} class="font-mono text-(--text-muted) underline">{STATS_URL}</a>
+    </footer>
+</main>
+
+<script>
+    import { attachChartTooltips } from "../../scripts/charts";
+    import { countUp, staggerCards } from "../../scripts/animations";
+
+    attachChartTooltips();
+    staggerCards(".dashboard-card");
+
+    const format = new Intl.NumberFormat("es-ES");
+    for (const el of document.querySelectorAll<HTMLElement>(".stat-value")) {
+        countUp(el, value => format.format(value));
+    }
+</script>
