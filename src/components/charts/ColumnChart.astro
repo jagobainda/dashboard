@@ -1,5 +1,4 @@
 ---
-
 import { formatNumber } from "../../lib/stats";
 import { columnPath, seriesColor, yTicks } from "../../lib/viz";
 
@@ -38,7 +37,6 @@ const color = seriesColor(1);
 ---
 
 <svg viewBox={`0 0 ${W} ${H}`} class="w-full" role="img" aria-label={`Gráfico de columnas: ${unit}`}>
-
     {
         ticks.map(tick => (
             <>

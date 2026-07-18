@@ -1,5 +1,4 @@
 ---
-
 import ChartCard from "../cards/ChartCard.astro";
 import StatTile from "../cards/StatTile.astro";
 import BarList from "../charts/BarList.astro";
@@ -100,7 +99,6 @@ const dowPoints = stats ? stats.by_day_of_week.map(d => ({ label: dowName(d.dow)
     {
         stats && (
             <>
-
                 <section aria-label="Totales" class="grid grid-cols-2 gap-5 lg:grid-cols-4">
                     <StatTile
                         label="Visitas"
@@ -111,7 +109,6 @@ const dowPoints = stats ? stats.by_day_of_week.map(d => ({ label: dowName(d.dow)
                     <StatTile label="Países" value={stats.totals.countries} />
                     <StatTile label="Servicios" value={stats.totals.services} />
                 </section>
-
 
                 <section aria-label="Reparto" class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <ChartCard title="Visitas por servicio" subtitle="Reparto del total de visitas">
@@ -163,7 +160,6 @@ const dowPoints = stats ? stats.by_day_of_week.map(d => ({ label: dowName(d.dow)
                         </dl>
                     </ChartCard>
                 </section>
-
 
                 <section aria-label="Evolución temporal" class="mt-5 flex flex-col gap-5">
                     <ChartCard title="Visitas por día" subtitle="Apilado por servicio">
@@ -291,7 +287,6 @@ const dowPoints = stats ? stats.by_day_of_week.map(d => ({ label: dowName(d.dow)
                         </ChartCard>
                     </div>
                 </section>
-
 
                 <section aria-label="Rankings globales" class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <ChartCard title="Top países" subtitle="Todas las webs">
