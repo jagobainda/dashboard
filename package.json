@@ -11,10 +11,10 @@
         "format:check": "prettier --check ."
     },
     "dependencies": {
-        "@astrojs/node": "^11.0.3",
+        "@astrojs/node": "^11.1.1",
         "@tailwindcss/vite": "^4.3.3",
         "animejs": "^4.5.0",
-        "astro": "^7.1.6",
+        "astro": "^7.2.1",
         "astro-icon": "^1.1.5",
         "tailwindcss": "^4.3.3"
     },
@@ -22,5 +22,8 @@
         "prettier": "^3.9.6",
         "prettier-plugin-astro": "^0.14.1",
         "prettier-plugin-tailwindcss": "^0.8.1"
+    },
+    "overrides": {
+        "@iconify/tools": "5.0.12"
     }
 }
