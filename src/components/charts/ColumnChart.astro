@@ -37,78 +37,69 @@ const color = seriesColor(1);
 ---
 
 <svg viewBox={`0 0 ${W} ${H}`} class="w-full" role="img" aria-label={`Gráfico de columnas: ${unit}`}>
-    {
-        ticks.map(tick => (
-            <>
-                <line
-                    x1={M.left}
-                    x2={W - M.right}
-                    y1={y(tick)}
-                    y2={y(tick)}
-                    stroke={tick === 0 ? "var(--chart-axis)" : "var(--chart-grid)"}
-                    stroke-width="1"
+    {ticks.map(tick => (
+        <>
+            <line
+                x1={M.left}
+                x2={W - M.right}
+                y1={y(tick)}
+                y2={y(tick)}
+                stroke={tick === 0 ? "var(--chart-axis)" : "var(--chart-grid)"}
+                stroke-width="1"
+            />
+            <text x={M.left - 6} y={y(tick) + 3} text-anchor="end" class="fill-(--text-muted) text-[10px] tabular-nums">
+                {formatNumber(tick)}
+            </text>
+        </>
+    ))}
+
+    {points.map((point, i) => {
+        const x = M.left + i * slotW + (slotW - barW) / 2;
+        const title = point.longLabel ?? point.label;
+        return (
+            <g>
+                {point.value > 0 && (
+                    <path d={columnPath(x, y(point.value), barW, y(0))} fill={color} class="chart-mark" />
+                )}
+
+                <rect
+                    x={M.left + i * slotW}
+                    y={M.top}
+                    width={slotW}
+                    height={plotH}
+                    fill="transparent"
+                    class="outline-none"
+                    tabindex="0"
+                    role="img"
+                    aria-label={`${title}: ${formatNumber(point.value)} ${unit}`}
+                    data-tooltip={JSON.stringify({
+                        title,
+                        rows: [{ label: unit, value: formatNumber(point.value), color }],
+                    })}
                 />
-                <text
-                    x={M.left - 6}
-                    y={y(tick) + 3}
-                    text-anchor="end"
-                    class="fill-(--text-muted) text-[10px] tabular-nums"
-                >
-                    {formatNumber(tick)}
-                </text>
-            </>
-        ))
-    }
-
-    {
-        points.map((point, i) => {
-            const x = M.left + i * slotW + (slotW - barW) / 2;
-            const title = point.longLabel ?? point.label;
-            return (
-                <g>
-                    {point.value > 0 && (
-                        <path d={columnPath(x, y(point.value), barW, y(0))} fill={color} class="chart-mark" />
-                    )}
-
-                    <rect
-                        x={M.left + i * slotW}
-                        y={M.top}
-                        width={slotW}
-                        height={plotH}
-                        fill="transparent"
-                        class="outline-none"
-                        tabindex="0"
-                        role="img"
-                        aria-label={`${title}: ${formatNumber(point.value)} ${unit}`}
-                        data-tooltip={JSON.stringify({
-                            title,
-                            rows: [{ label: unit, value: formatNumber(point.value), color }],
-                        })}
-                    />
-                    {i === maxIndex && point.value > 0 && (
-                        <text
-                            x={x + barW / 2}
-                            y={y(point.value) - 5}
-                            text-anchor="middle"
-                            class="fill-(--text-color) text-[11px] font-bold tabular-nums"
-                        >
-                            {formatNumber(point.value)}
-                        </text>
-                    )}
-                    {i % labelEvery === 0 && (
-                        <text
-                            x={M.left + i * slotW + slotW / 2}
-                            y={H - 8}
-                            text-anchor="middle"
-                            class="fill-(--text-muted) text-[10px]"
-                        >
-                            {point.label}
-                        </text>
-                    )}
-                </g>
-            );
-        })
-    }
+                {i === maxIndex && point.value > 0 && (
+                    <text
+                        x={x + barW / 2}
+                        y={y(point.value) - 5}
+                        text-anchor="middle"
+                        class="fill-(--text-color) text-[11px] font-bold tabular-nums"
+                    >
+                        {formatNumber(point.value)}
+                    </text>
+                )}
+                {i % labelEvery === 0 && (
+                    <text
+                        x={M.left + i * slotW + slotW / 2}
+                        y={H - 8}
+                        text-anchor="middle"
+                        class="fill-(--text-muted) text-[10px]"
+                    >
+                        {point.label}
+                    </text>
+                )}
+            </g>
+        );
+    })}
 </svg>
 
 <style>
