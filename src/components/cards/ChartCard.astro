@@ -7,9 +7,7 @@ interface Props {
 const { title, subtitle } = Astro.props;
 ---
 
-<article
-    class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)] transition-colors duration-300"
->
+<article class="dashboard-card rounded-xl bg-(--bg-secondary) p-5 shadow-[4px_4px_8px_var(--shadow-light)] transition-colors duration-300">
     <header class="mb-4">
         <h3 class="font-mono text-lg font-bold">{title}</h3>
         {subtitle && <p class="mt-0.5 text-sm text-(--text-muted)">{subtitle}</p>}
@@ -17,18 +15,16 @@ const { title, subtitle } = Astro.props;
 
     <slot />
 
-    {
-        Astro.slots.has("table") && (
-            <details class="mt-4 text-sm">
-                <summary class="cursor-pointer font-mono text-xs text-(--text-muted) transition-colors duration-300 hover:text-(--text-color)">
-                    Ver como tabla
-                </summary>
-                <div class="mt-2 overflow-x-auto">
-                    <slot name="table" />
-                </div>
-            </details>
-        )
-    }
+    {Astro.slots.has("table") && (
+        <details class="mt-4 text-sm">
+            <summary class="cursor-pointer font-mono text-xs text-(--text-muted) transition-colors duration-300 hover:text-(--text-color)">
+                Ver como tabla
+            </summary>
+            <div class="mt-2 overflow-x-auto">
+                <slot name="table" />
+            </div>
+        </details>
+    )}
 </article>
 
 <style is:global>

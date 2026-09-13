@@ -21,28 +21,26 @@ const total = segments.reduce((sum, s) => sum + s.value, 0);
         role="img"
         aria-label={`${centerLabel}: ${formatNumber(total)}`}
     >
-        {
-            arcs.map(arc => (
-                <path
-                    d={arc.d}
-                    fill={arc.color}
-                    class="chart-mark cursor-default outline-none"
-                    tabindex="0"
-                    role="img"
-                    aria-label={`${arc.label}: ${formatNumber(arc.value)} (${formatShare(arc.share)})`}
-                    data-tooltip={JSON.stringify({
-                        title: arc.label,
-                        rows: [
-                            {
-                                label: `visitas (${formatShare(arc.share)})`,
-                                value: formatNumber(arc.value),
-                                color: arc.color,
-                            },
-                        ],
-                    })}
-                />
-            ))
-        }
+        {arcs.map(arc => (
+            <path
+                d={arc.d}
+                fill={arc.color}
+                class="chart-mark cursor-default outline-none"
+                tabindex="0"
+                role="img"
+                aria-label={`${arc.label}: ${formatNumber(arc.value)} (${formatShare(arc.share)})`}
+                data-tooltip={JSON.stringify({
+                    title: arc.label,
+                    rows: [
+                        {
+                            label: `visitas (${formatShare(arc.share)})`,
+                            value: formatNumber(arc.value),
+                            color: arc.color,
+                        },
+                    ],
+                })}
+            />
+        ))}
         <text x={SIZE / 2} y={SIZE / 2 - 4} text-anchor="middle" class="fill-(--text-color) text-3xl font-bold">
             {formatNumber(total)}
         </text>
@@ -52,16 +50,14 @@ const total = segments.reduce((sum, s) => sum + s.value, 0);
     </svg>
 
     <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm">
-        {
-            arcs.map(arc => (
-                <li class="flex items-center gap-2">
-                    <span class="inline-block h-3 w-3 shrink-0 rounded-xs" style={`background:${arc.color}`} />
-                    <span class="font-mono">{arc.label}</span>
-                    <span class="font-bold">{formatNumber(arc.value)}</span>
-                    <span class="text-(--text-muted)">({formatShare(arc.share)})</span>
-                </li>
-            ))
-        }
+        {arcs.map(arc => (
+            <li class="flex items-center gap-2">
+                <span class="inline-block h-3 w-3 shrink-0 rounded-xs" style={`background:${arc.color}`} />
+                <span class="font-mono">{arc.label}</span>
+                <span class="font-bold">{formatNumber(arc.value)}</span>
+                <span class="text-(--text-muted)">({formatShare(arc.share)})</span>
+            </li>
+        ))}
     </ul>
 </div>
 
